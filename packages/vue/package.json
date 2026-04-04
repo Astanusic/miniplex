@@ -1,0 +1,38 @@
+{
+  "name": "miniplex-vue",
+  "author": {
+    "name": "astanusic",
+    "email": "adrienpro.stanusic@gmail.com"
+  },
+  "description": "Vue 3 glue for Miniplex.",
+  "homepage": "https://github.com/hmans/miniplex",
+  "keywords": [
+    "gamedev",
+    "ecs",
+    "vue",
+    "vue3",
+    "entity-component-system",
+    "state",
+    "state-management",
+    "composables"
+  ],
+  "sideEffects": false,
+  "version": "1.0.0",
+  "main": "dist/miniplex-vue.cjs.js",
+  "module": "dist/miniplex-vue.esm.js",
+  "types": "dist/miniplex-vue.cjs.d.ts",
+  "files": [
+    "dist/**",
+    "LICENSE",
+    "README.md"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "miniplex": "2.0.0",
+    "vue": "^3.0.0"
+  },
+  "peerDependencies": {
+    "miniplex": "^2.0.0 || ^3.0.0",
+    "vue": "^3.0.0"
+  }
+}
