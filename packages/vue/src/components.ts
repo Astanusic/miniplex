@@ -30,6 +30,7 @@ export function createComponents<E extends {}>(
 
       provide(EntitySymbol, entity);
 
+      /* Add the entity to the world if it isn't already part of it. */
       onMounted(() => {
         if (!world.has(entity)) {
           world.add(entity);
@@ -67,6 +68,7 @@ export function createComponents<E extends {}>(
         return () => slots.default?.();
       }
 
+      /* Handle creation and removal of component with a value prop */
       onMounted(() => {
         const value = props.data !== undefined ? props.data : (true as E[keyof E]);
         world.addComponent(entity, props.name as keyof E, value as E[keyof E]);
@@ -76,6 +78,7 @@ export function createComponents<E extends {}>(
         world.removeComponent(entity, props.name as keyof E);
       });
 
+      /* Handle updates to existing component */
       watch(
         () => props.data,
         (newData) => {
