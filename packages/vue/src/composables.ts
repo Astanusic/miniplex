@@ -1,21 +1,17 @@
 import { inject, onScopeDispose, shallowRef, triggerRef, type Ref } from "vue";
-import type { Query, World } from "miniplex";
+import type { Bucket, World } from "miniplex";
 import { EntitySymbol } from "./types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createComposables<E extends Record<string, any>>(
-  _world: World<E>,
-) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const useEntities = (query: Query<any>): Ref<E[]> => {
-    const entities = shallowRef(query.entities);
+export function createComposables<E extends {}>(_world: World<E>) {
+  const useEntities = <D extends E>(bucket: Bucket<D>): Ref<D[]> => {
+    const entities = shallowRef(bucket.entities);
 
     const update = () => {
       triggerRef(entities);
     };
 
-    const unsubAdded = query.onEntityAdded.subscribe(update);
-    const unsubRemoved = query.onEntityRemoved.subscribe(update);
+    const unsubAdded = bucket.onEntityAdded.subscribe(update);
+    const unsubRemoved = bucket.onEntityRemoved.subscribe(update);
 
     onScopeDispose(() => {
       unsubAdded();

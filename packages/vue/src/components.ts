@@ -9,14 +9,12 @@ import {
   type VNode,
   type Ref,
 } from "vue";
-import type { World, Query } from "miniplex";
+import { type World, Bucket } from "miniplex";
 import { EntitySymbol } from "./types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createComponents<E extends Record<string, any>>(
+export function createComponents<E extends {}>(
   world: World<E>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useEntities: (query: Query<any>) => Ref<E[]>,
+  useEntities: <D extends E>(bucket: Bucket<D>) => Ref<D[]>,
 ) {
   const Entity = defineComponent({
     name: "MiniplexEntity",
@@ -53,12 +51,11 @@ export function createComponents<E extends Record<string, any>>(
     name: "MiniplexComponent",
     props: {
       name: {
-        type: String as PropType<keyof E>,
+        type: String as unknown as PropType<keyof E>,
         required: true,
       },
       data: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        type: null as any,
+        type: null as unknown as PropType<unknown>,
         required: false,
       },
     },
@@ -71,8 +68,8 @@ export function createComponents<E extends Record<string, any>>(
       }
 
       onMounted(() => {
-        const value = props.data !== undefined ? props.data : (true as any);
-        world.addComponent(entity, props.name as keyof E, value);
+        const value = props.data !== undefined ? props.data : (true as E[keyof E]);
+        world.addComponent(entity, props.name as keyof E, value as E[keyof E]);
       });
 
       onBeforeUnmount(() => {
@@ -82,7 +79,7 @@ export function createComponents<E extends Record<string, any>>(
       watch(
         () => props.data,
         (newData) => {
-          const value = newData !== undefined ? newData : (true as any);
+          const value = newData !== undefined ? newData : (true as E[keyof E]);
           entity[props.name as keyof E] = value as E[keyof E];
         },
       );
@@ -95,16 +92,13 @@ export function createComponents<E extends Record<string, any>>(
     name: "MiniplexEntities",
     props: {
       in: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        type: [Object, Array] as PropType<Query<any> | E[]>,
+        type: [Object, Array] as PropType<Bucket<E> | E[]>,
         required: true,
       },
     },
     setup(props, { slots }) {
-      const isQuery = props.in && "onEntityAdded" in props.in;
-      const entitiesRef = isQuery
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (useEntities as any)(props.in as Query<any>)
+      const entitiesRef = props.in instanceof Bucket
+        ? useEntities(props.in as Bucket<E>)
         : undefined;
 
       return () => {
