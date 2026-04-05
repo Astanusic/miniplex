@@ -5,6 +5,9 @@ import {
   onMounted,
   onBeforeUnmount,
   watch,
+  cloneVNode,
+  isVNode,
+  ref,
   type PropType,
   type VNode,
   type Ref,
@@ -62,6 +65,7 @@ export function createComponents<E extends {}>(
     },
     setup(props, { slots }) {
       const entity = inject(EntitySymbol) as E | undefined;
+      const componentRef = ref<any>(null);
 
       if (!entity) {
         console.warn("MiniplexComponent must be a child of MiniplexEntity");
@@ -70,8 +74,12 @@ export function createComponents<E extends {}>(
 
       /* Handle creation and removal of component with a value prop */
       onMounted(() => {
-        const value = props.data !== undefined ? props.data : (true as E[keyof E]);
+        const value = props.data !== undefined ? props.data : (componentRef.value ?? true);
         world.addComponent(entity, props.name as keyof E, value as E[keyof E]);
+
+        if (entity[props.name as keyof E] !== value) {
+          entity[props.name as keyof E] = value as E[keyof E];
+        }
       });
 
       onBeforeUnmount(() => {
@@ -80,14 +88,33 @@ export function createComponents<E extends {}>(
 
       /* Handle updates to existing component */
       watch(
-        () => props.data,
+        () => props.data !== undefined ? props.data : componentRef.value,
         (newData) => {
           const value = newData !== undefined ? newData : (true as E[keyof E]);
           entity[props.name as keyof E] = value as E[keyof E];
         },
       );
 
-      return () => slots.default?.();
+      return () => {
+        const children = slots.default?.();
+        if (!children || props.data !== undefined) return children;
+
+        // Try to clone the first valid VNode to inject our ref
+        const validChildren = children.filter(child => isVNode(child) && typeof child.type !== 'symbol');
+        
+        if (validChildren.length === 1) {
+          const child = validChildren[0];
+          return [
+            cloneVNode(child, {
+              ref: (el: any) => {
+                componentRef.value = el;
+              }
+            })
+          ];
+        }
+
+        return children;
+      };
     },
   });
 
